@@ -1,0 +1,23 @@
+{
+  "name": "nextcandle-api",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@9.15.1",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "api:dev": "turbo run dev --filter=@nextcandle/api",
+    "serving:dev": "turbo run dev --filter=@nextcandle/serving"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

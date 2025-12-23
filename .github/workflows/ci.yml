@@ -1,0 +1,189 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    runs-on: [self-hosted, linux]
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      serving: ${{ steps.filter.outputs.serving }}
+      shared: ${{ steps.filter.outputs.shared }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'apps/api/**'
+              - 'packages/shared/**'
+              - 'pnpm-lock.yaml'
+            serving:
+              - 'apps/serving/**'
+            shared:
+              - 'packages/shared/**'
+
+  lint-and-test-api:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api == 'true'
+    runs-on: [self-hosted, linux]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: nextcandle_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm --filter @nextcandle/api lint
+
+      - name: Build shared
+        run: pnpm --filter @nextcandle/shared build
+
+      - name: Build API
+        run: pnpm --filter @nextcandle/api build
+
+      - name: Run tests
+        run: pnpm --filter @nextcandle/api test
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: test
+          DB_PASSWORD: test
+          DB_NAME: nextcandle_test
+
+  lint-and-test-serving:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.serving == 'true'
+    runs-on: [self-hosted, linux]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        working-directory: apps/serving
+        run: uv pip install --system -e ".[dev]"
+
+      - name: Lint
+        working-directory: apps/serving
+        run: |
+          uv run ruff check src
+          uv run ruff format --check src
+
+      - name: Type check
+        working-directory: apps/serving
+        run: uv run mypy src --ignore-missing-imports
+
+      - name: Run tests
+        working-directory: apps/serving
+        run: uv run pytest
+
+  build-api-image:
+    needs: lint-and-test-api
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.CONTAINER_REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ${{ vars.CONTAINER_REGISTRY }}/nextcandle-api:${{ github.sha }}
+            ${{ vars.CONTAINER_REGISTRY }}/nextcandle-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  build-serving-image:
+    needs: lint-and-test-serving
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux]
+    strategy:
+      matrix:
+        include:
+          - target: runner-gpu
+            suffix: gpu
+          - target: runner-cpu
+            suffix: cpu
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.CONTAINER_REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push Serving image (${{ matrix.suffix }})
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/serving
+          file: apps/serving/Dockerfile
+          target: ${{ matrix.target }}
+          push: true
+          tags: |
+            ${{ vars.CONTAINER_REGISTRY }}/nextcandle-serving:${{ github.sha }}-${{ matrix.suffix }}
+            ${{ vars.CONTAINER_REGISTRY }}/nextcandle-serving:latest-${{ matrix.suffix }}
+            ${{ matrix.suffix == 'gpu' && format('{0}/nextcandle-serving:{1}', vars.CONTAINER_REGISTRY, github.sha) || '' }}
+            ${{ matrix.suffix == 'gpu' && format('{0}/nextcandle-serving:latest', vars.CONTAINER_REGISTRY) || '' }}
+          cache-from: type=gha,scope=serving-${{ matrix.suffix }}
+          cache-to: type=gha,mode=max,scope=serving-${{ matrix.suffix }}
+          platforms: linux/amd64

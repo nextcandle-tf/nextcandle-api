@@ -1,0 +1,17 @@
+node_modules
+dist
+.env
+.env.*
+*.log
+.turbo
+coverage
+.nyc_output
+*.md
+.git
+.gitignore
+Dockerfile
+.dockerignore
+test
+*.spec.ts
+*.test.ts
+vitest.config.ts

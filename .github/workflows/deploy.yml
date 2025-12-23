@@ -1,0 +1,70 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      service:
+        description: 'Service to deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - api
+          - serving
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-api:
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.service == 'all' || inputs.service == 'api'))
+    runs-on: [self-hosted, linux]
+    environment: ${{ inputs.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy API
+        run: |
+          echo "Deploying API to ${{ inputs.environment || 'production' }}"
+          # Add your deployment commands here
+          # e.g., kubectl rollout, docker-compose pull, etc.
+
+      - name: Notify deployment
+        if: always()
+        run: |
+          echo "API deployment completed with status: ${{ job.status }}"
+
+  deploy-serving:
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.service == 'all' || inputs.service == 'serving'))
+    runs-on: [self-hosted, linux, gpu]
+    environment: ${{ inputs.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Serving
+        run: |
+          echo "Deploying Serving to ${{ inputs.environment || 'production' }}"
+          # Add your deployment commands here
+
+      - name: Notify deployment
+        if: always()
+        run: |
+          echo "Serving deployment completed with status: ${{ job.status }}"
