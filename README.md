@@ -1,16 +1,51 @@
 # NextCandle API
 
-Backend service for NextCandle, built with Python (FastAPI/Flask).
+The backend API service for NextCandle, powered by Python and PyTorch.
 
-## Description
-This repository contains the business logic, machine learning inference service, and database management for the NextCandle platform.
+## 💡 Overview
+This service handles cryptocurrency pattern recognition using deep learning (PyTorch) and provides RESTful endpoints for the frontend application. It manages user authentication, subscription data, and real-time market data retrieval from Binance.
 
-## Setup
-1.  Install dependencies:
+## 🛠️ Tech Stack
+*   **Language**: Python 3.11+
+*   **Web Framework**: Flask / Gunicorn
+*   **AI/ML**: PyTorch (PatternEncoder, Triplet Loss)
+*   **Data Source**: CCXT (Binance API)
+*   **Database**: SQLite (User data, Cache)
+
+## 🚀 Getting Started
+
+### Prerequisites
+*   Python 3.11+
+*   Virtual Environment (venv) recommended
+
+### Installation
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/nextcandle-tf/nextcandle-api.git
+    cd nextcandle-api
+    ```
+2.  Create and activate virtual environment:
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate  # Windows: .venv\Scripts\activate
+    ```
+3.  Install dependencies:
     ```bash
     pip install -r requirements.txt
     ```
-2.  Run the server:
-    ```bash
-    python pattern_api.py
-    ```
+
+### Running the Server
+```bash
+# Development
+python pattern_api.py
+
+# Production (Gunicorn)
+gunicorn -c gunicorn_config.py pattern_api:app
+```
+
+## 📂 Project Structure
+*   `pattern_api.py`: Main Flask application entry point.
+*   `database.py`: Database connection and ORM-like management.
+*   `users.db`: SQLite database for user info (gitignored).
+*   `gunicorn_config.py`: Production server configuration.
+*   `requirements.txt`: Python dependencies.
