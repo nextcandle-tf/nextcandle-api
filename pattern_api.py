@@ -35,7 +35,7 @@ from scheduler import AutoAnalysisScheduler
 from performance_cache import performance_cache, cached, task_manager
 
 # 패턴 검출 스크립트 import
-sys.path.append('/home/andy/candle-model/scripts')
+sys.path.append('/home/andy/nextcandle/nextcandle-api/ml/scripts')
 from pattern_detecter_with_cache_v8_64emd_no_reranker import (
     load_ohlc_data, normalize_window, PatternEncoder, 
     find_similar_patterns, precompute_and_save_embeddings,
@@ -123,9 +123,9 @@ def send_verification_email(email, code):
 
 # Configuration
 CONFIG = {
-    'csv_path': '/home/andy/candle-model/input_data/New_bs+bn_BTCUSD_250720_update, 240.csv',
-    'model_path': '/home/andy/candle-model/output/embeddings/v8/v8_BTC_4H_encoder_multi_emb64.pth',
-    'emb_path': '/home/andy/candle-model/output/embeddings/v8/v8_BTC_4H_embeddings_emb64.pkl',
+    'csv_path': '/home/andy/nextcandle/nextcandle-api/ml/input_data/New_bs+bn_BTCUSD_250720_update, 240.csv',
+    'model_path': '/home/andy/nextcandle/nextcandle-api/ml/output/embeddings/v8/v8_BTC_4H_encoder_multi_emb64.pth',
+    'emb_path': '/home/andy/nextcandle/nextcandle-api/ml/output/embeddings/v8/v8_BTC_4H_embeddings_emb64.pkl',
     'emb_dim': 64, # Updated to 64
     'max_pattern_len': 100,
     'min_pattern_len': 3,
