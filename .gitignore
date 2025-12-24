@@ -65,3 +65,6 @@ Thumbs.db
 
 # nul
 nul
+
+# Claude Code (user-specific settings)
+.claude/settings.json
