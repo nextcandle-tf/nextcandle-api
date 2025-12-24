@@ -2,7 +2,7 @@
   "name": "nextcandle-api",
   "version": "0.0.1",
   "private": true,
-  "packageManager": "pnpm@9.15.1",
+  "packageManager": "pnpm@10.26.0",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
