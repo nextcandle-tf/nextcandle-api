@@ -6,7 +6,6 @@ Cryptocurrency pattern detection API powered by deep learning.
 
 - **Monorepo**: Turborepo + pnpm
 - **API**: NestJS v11 + Fastify v11 + MikroORM + PostgreSQL
-- **API**: NestJS v11 + Fastify v11 + MikroORM + PostgreSQL
 - **Testing**: Vitest + Testcontainers
 
 ## Project Structure
@@ -15,6 +14,8 @@ Cryptocurrency pattern detection API powered by deep learning.
 nextcandle-api/
 ├── apps/
 │   └── api/              # NestJS API server
+├── packages/
+│   └── shared/           # Shared types & utilities
 ├── turbo.json            # Turborepo config
 └── package.json          # Root package
 ```
@@ -25,17 +26,12 @@ nextcandle-api/
 
 - Node.js >= 20
 - pnpm >= 9
-- Python >= 3.11
 - PostgreSQL 16
-- CUDA (for GPU support)
 - Docker (for Testcontainers)
 
 ### Installation
 
 ```bash
-# Install dependencies
-pnpm install
-
 # Install dependencies
 pnpm install
 ```
@@ -45,9 +41,6 @@ pnpm install
 ```bash
 # Start all services
 pnpm dev
-
-# Start API only
-pnpm api:dev
 
 # Start API only
 pnpm api:dev
@@ -81,8 +74,6 @@ pnpm test:cov       # With coverage
 
 - `GET /` - Health check
 - `GET /health` - Detailed health
-- `GET /api/docs` - Swagger documentation
-
 - `GET /api/docs` - Swagger documentation
 
 ## Infrastructure
