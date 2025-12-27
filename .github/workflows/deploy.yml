@@ -23,7 +23,6 @@ on:
         options:
           - all
           - api
-          - serving
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -50,21 +49,3 @@ jobs:
         run: |
           echo "API deployment completed with status: ${{ job.status }}"
 
-  deploy-serving:
-    if: |
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.service == 'all' || inputs.service == 'serving'))
-    runs-on: [self-hosted, linux, gpu]
-    environment: ${{ inputs.environment || 'production' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy Serving
-        run: |
-          echo "Deploying Serving to ${{ inputs.environment || 'production' }}"
-          # Add your deployment commands here
-
-      - name: Notify deployment
-        if: always()
-        run: |
-          echo "Serving deployment completed with status: ${{ job.status }}"

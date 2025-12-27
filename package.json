@@ -9,8 +9,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "api:dev": "turbo run dev --filter=@nextcandle/api",
-    "serving:dev": "turbo run dev --filter=@nextcandle/serving"
+    "api:dev": "turbo run dev --filter=@nextcandle/api"
   },
   "devDependencies": {
     "prettier": "^3.4.2",
